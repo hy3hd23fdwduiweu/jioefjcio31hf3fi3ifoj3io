@@ -10,14 +10,3 @@ module.exports = {
     MAX_STEALTH_DURATION: 3600,
     MAX_SHARE_DURATION: 8 * 3600,
 };
-```
-
----
-
-### `.env.example`
-```
-PORT=3000
-JWT_SECRET=replace_this_with_a_long_random_string
-JWT_EXPIRES_IN=86400
-CORS_ORIGIN=*
-DB_PATH=./data/teamtracker.db
