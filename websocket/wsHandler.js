@@ -216,26 +216,3 @@ function send(ws, data) { if (ws.readyState === 1) ws.send(JSON.stringify(data))
 function sendError(ws, code, message) { send(ws, { type: 'ERROR', code, message }); }
 
 module.exports = { setupWebSocketServer };
-```
-
----
-
-That's every file. The folder structure for your repo is:
-```
-/
-├── package.json
-├── index.js
-├── config.js
-├── .env.example
-├── db/
-│   ├── schema.sql
-│   └── database.js
-├── middleware/
-│   └── auth.js
-├── routes/
-│   ├── auth.js
-│   ├── groups.js
-│   ├── friends.js
-│   └── misc.js
-└── websocket/
-    └── wsHandler.js
