@@ -1,11 +1,11 @@
 require('dotenv').config();
-const express = require('express');
-const http    = require('http');
+const express   = require('express');
+const http      = require('http');
 const WebSocket = require('ws');
-const helmet  = require('helmet');
-const cors    = require('cors');
+const helmet    = require('helmet');
+const cors      = require('cors');
 const rateLimit = require('express-rate-limit');
-const { PORT } = require('./config');
+const { PORT }  = require('./config');
 const { setupWebSocketServer } = require('./websocket/wsHandler');
 
 const app    = express();
