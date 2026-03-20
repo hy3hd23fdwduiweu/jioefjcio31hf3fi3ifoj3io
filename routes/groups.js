@@ -25,9 +25,11 @@ router.get('/mine', (req, res) => {
     if (!group) return res.json({ group: null });
     const members   = db.prepare('SELECT gm.uuid,gm.role,gm.icon,gm.is_blind,u.username FROM group_members gm JOIN users u ON u.uuid=gm.uuid WHERE gm.group_id=?').all(group.id);
     const waypoints = db.prepare('SELECT * FROM group_waypoints WHERE group_id=?').all(group.id);
-    return res.json({ group: { id: group.id, name: group.name, leaderUuid: group.leader_uuid,
+    return res.json({ group: {
+        id: group.id, name: group.name, leaderUuid: group.leader_uuid,
         joinMode: group.join_mode, announcement: group.announcement,
-        members, waypoints, myRole: membership.role, isBlind: membership.is_blind === 1 } });
+        members, waypoints, myRole: membership.role, isBlind: membership.is_blind === 1
+    }});
 });
 
 router.post('/create', async (req, res) => {
@@ -88,7 +90,8 @@ router.post('/kick', requireLeaderOrColeader, (req, res) => {
     if (targetUuid === req.player.uuid) return res.status(400).json({ error: 'Cannot kick yourself' });
     const target = db.prepare('SELECT * FROM group_members WHERE group_id=? AND uuid=?').get(req.group.id, targetUuid);
     if (!target) return res.status(404).json({ error: 'Not in group' });
-    if (req.actorRole === 'co-leader' && ['leader','co-leader'].includes(target.role)) return res.status(403).json({ error: 'Co-leaders cannot kick leaders/co-leaders' });
+    if (req.actorRole === 'co-leader' && ['leader','co-leader'].includes(target.role))
+        return res.status(403).json({ error: 'Co-leaders cannot kick leaders/co-leaders' });
     if (target.role === 'leader') return res.status(403).json({ error: 'Cannot kick the leader' });
     db.prepare('DELETE FROM group_members WHERE group_id=? AND uuid=?').run(req.group.id, targetUuid);
     return res.json({ success: true });
