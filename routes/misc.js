@@ -10,7 +10,8 @@ router.use(authenticate);
 router.post('/stealth', (req, res) => {
     const { uuid } = req.player; const { active, durationSeconds } = req.body;
     if (!active) { db.prepare('UPDATE users SET stealth_until=0 WHERE uuid=?').run(uuid); return res.json({ success: true, stealthUntil: 0 }); }
-    if (!durationSeconds || durationSeconds < 1 || durationSeconds > MAX_STEALTH_DURATION) return res.status(400).json({ error: `Duration 1–${MAX_STEALTH_DURATION}s` });
+    if (!durationSeconds || durationSeconds < 1 || durationSeconds > MAX_STEALTH_DURATION)
+        return res.status(400).json({ error: `Duration 1–${MAX_STEALTH_DURATION}s` });
     const until = Math.floor(Date.now() / 1000) + durationSeconds;
     db.prepare('UPDATE users SET stealth_until=? WHERE uuid=?').run(until, uuid);
     return res.json({ success: true, stealthUntil: until });
@@ -19,8 +20,10 @@ router.post('/stealth', (req, res) => {
 router.post('/location/share', (req, res) => {
     const { uuid } = req.player; const { targetUuid, durationSeconds } = req.body;
     if (targetUuid === uuid) return res.status(400).json({ error: 'Cannot share with yourself' });
-    if (!durationSeconds || durationSeconds < 1 || durationSeconds > MAX_SHARE_DURATION) return res.status(400).json({ error: `Duration 1–${MAX_SHARE_DURATION}s` });
-    if (db.prepare('SELECT 1 FROM ignores WHERE uuid=? AND ignored_uuid=?').get(targetUuid, uuid)) return res.status(403).json({ error: 'Player has ignored you' });
+    if (!durationSeconds || durationSeconds < 1 || durationSeconds > MAX_SHARE_DURATION)
+        return res.status(400).json({ error: `Duration 1–${MAX_SHARE_DURATION}s` });
+    if (db.prepare('SELECT 1 FROM ignores WHERE uuid=? AND ignored_uuid=?').get(targetUuid, uuid))
+        return res.status(403).json({ error: 'Player has ignored you' });
     const expiresAt = Math.floor(Date.now() / 1000) + durationSeconds;
     const id = uuidv4();
     db.prepare('INSERT INTO location_shares(id,from_uuid,to_uuid,expires_at) VALUES(?,?,?,?)').run(id, uuid, targetUuid, expiresAt);
@@ -40,10 +43,17 @@ router.get('/location/shares/outgoing', (req, res) => {
 
 router.post('/location/request', (req, res) => {
     const { uuid } = req.player; const { targetUuid } = req.body;
-    if (db.prepare('SELECT 1 FROM ignores WHERE uuid=? AND ignored_uuid=?').get(targetUuid, uuid)) return res.status(403).json({ error: 'Player has ignored you' });
+    if (db.prepare('SELECT 1 FROM ignores WHERE uuid=? AND ignored_uuid=?').get(targetUuid, uuid))
+        return res.status(403).json({ error: 'Player has ignored you' });
     const id = uuidv4();
     db.prepare('INSERT INTO location_requests(id,from_uuid,to_uuid) VALUES(?,?,?)').run(id, uuid, targetUuid);
     return res.json({ success: true, requestId: id });
+});
+
+router.get('/location/requests/incoming', (req, res) => {
+    const { uuid } = req.player;
+    const reqs = db.prepare("SELECT lr.id, lr.from_uuid, u.username FROM location_requests lr JOIN users u ON u.uuid=lr.from_uuid WHERE lr.to_uuid=? AND lr.status='pending' ORDER BY lr.created_at DESC LIMIT 5").all(uuid);
+    return res.json({ requests: reqs });
 });
 
 router.get('/ignores', (req, res) => {
