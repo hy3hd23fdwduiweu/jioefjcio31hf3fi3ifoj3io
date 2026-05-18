@@ -11,12 +11,16 @@ const { setupWebSocketServer } = require('./websocket/wsHandler');
 const app    = express();
 const server = http.createServer(app);
 
+// Required for Render (and any reverse proxy) — tells express-rate-limit
+// to trust the X-Forwarded-For header so it can identify clients correctly.
+app.set('trust proxy', 1);
+
 app.use(helmet());
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 app.use(express.json());
 
 const limiter     = rateLimit({ windowMs: 60*1000, max: 120, standardHeaders: true, legacyHeaders: false });
-const authLimiter = rateLimit({ windowMs: 5*60*1000, max: 10 });
+const authLimiter = rateLimit({ windowMs: 5*60*1000, max: 20 });
 app.use('/api/', limiter);
 app.use('/api/auth/', authLimiter);
 
@@ -26,7 +30,10 @@ app.use('/api/friends', require('./routes/friends'));
 app.use('/api',         require('./routes/misc'));
 
 app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
-app.use((err, req, res, next) => { console.error(err.stack); res.status(500).json({ error: 'Internal server error' }); });
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Internal server error' });
+});
 
 const wss = new WebSocket.Server({ server, path: '/ws' });
 setupWebSocketServer(wss);
