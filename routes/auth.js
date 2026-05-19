@@ -21,10 +21,10 @@ router.post('/login', async (req, res) => {
         if (!profileResp.data?.id) return res.status(401).json({ error: 'Mojang verification failed' });
         const uuid  = formatUuid(profileResp.data.id);
         const uname = profileResp.data.name;
-        db.prepare('INSERT OR IGNORE INTO sessions(token,uuid,expires_at) VALUES(?,?,?)').run(token, uuid, expiresAt);
+        db.prepare("INSERT INTO users(uuid,username,last_seen) VALUES(?,?,strftime('%s','now')) ON CONFLICT(uuid) DO UPDATE SET username=excluded.username,last_seen=strftime('%s','now')").run(uuid, uname);
         const expiresAt = Math.floor(Date.now() / 1000) + JWT_EXPIRES_IN;
         const token = jwt.sign({ uuid, username: uname }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-        db.prepare('INSERT INTO sessions(token,uuid,expires_at) VALUES(?,?,?)').run(token, uuid, expiresAt);
+        db.prepare('INSERT OR IGNORE INTO sessions(token,uuid,expires_at) VALUES(?,?,?)').run(token, uuid, expiresAt);
         return res.json({ token, uuid, username: uname, expiresAt });
     } catch (e) { console.error('Auth:', e); return res.status(500).json({ error: 'Internal server error' }); }
 });
